@@ -11,8 +11,25 @@
           - curl
           - software-properties-common
           - gnupg-agent
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+          - ansible
         state: latest
         update_cache: true
+
+    - name: Ignore PEP 668 because it's silly.
+      ansible.builtin.file:
+        path: /usr/lib/python3.11/EXTERNALLY-MANAGED
+        state: absent
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Установить коллекцию community.docker
+      ansible.builtin.shell:
+        ansible-galaxy collection install community.docker
 
     - name: Добавление GPG key
       apt_key:
@@ -51,4 +68,4 @@
 
     - name: Запуск проекта через docker compose
       community.docker.docker_compose_v2:
-        project_src: /test_zadanie/zadanie1
+        project_src: /test_zadanie
