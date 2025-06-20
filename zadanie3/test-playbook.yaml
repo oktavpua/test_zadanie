@@ -1,0 +1,71 @@
+---
+- hosts: all
+  become: true
+
+  tasks:
+    - name: Установка зависимостей
+      apt:
+        pkg:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+          - gnupg-agent
+          - python3-pip
+          - virtualenv
+          - python3-setuptools
+          - ansible
+        state: latest
+        update_cache: true
+
+    - name: Ignore PEP 668 because it's silly.
+      ansible.builtin.file:
+        path: /usr/lib/python3.11/EXTERNALLY-MANAGED
+        state: absent
+
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+
+    - name: Установить коллекцию community.docker
+      ansible.builtin.shell:
+        ansible-galaxy collection install community.docker
+
+    - name: Добавление GPG key
+      apt_key:
+          url: https://download.docker.com/linux/debian/gpg
+          state: present
+
+    - name: Добавление докер репозитория
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/debian bookworm stable
+        state: present
+
+    - name: Установка Docker
+      apt:
+        name: docker-ce
+        state: latest
+        update_cache: true
+
+    - name: Проверка сервиса docker systemd
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Установка docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/v2.37.1/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+
+    - name: Клонирование проекта с GitHub
+      git:
+        repo: https://github.com/oktavpua/test_zadanie.git
+        dest: /test_zadanie
+        clone: yes
+        update: yes
+
+    - name: Запуск проекта через docker compose
+      community.docker.docker_compose_v2:
+        project_src: /test_zadanie
