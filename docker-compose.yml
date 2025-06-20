@@ -49,6 +49,19 @@ services:
     networks:
       - test-network
 
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:latest
+    container_name: nginx-exporter
+    ports:
+      - "9113:9113"
+    depends_on:
+      - nginx
+    environment:
+      - SCRAPE_URI=http://nginx:80/nginx_status
+      - NGINX_RETRIES=10
+    networks:
+      - test-network
+
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
